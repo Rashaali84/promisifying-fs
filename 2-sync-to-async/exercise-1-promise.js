@@ -2,7 +2,7 @@
 const fs = require('fs');
 const path = require('path');
 const assert = require('assert');
-
+const util = require('util');
 // declare constants
 const EXERCISE_NAME = path.basename(__filename);
 const START = Date.now();
@@ -13,7 +13,8 @@ const log = (logId, value) => console.log(
   value,
 );
 
-
+const readFilePromise = util.promisify(fs.readFile);
+const writeFilePromise = util.promisify(fs.writeFile);
 // --- main script ---
 console.log(`\n--- ${EXERCISE_NAME} ---`);
 
@@ -33,6 +34,27 @@ const yourGuess = process.argv[4] === 'true'
 log(3, yourGuess);
 
 log(4, `reading ${fileName1} ...`);
+readFilePromise(filePath1, 'utf8')
+  .then((fileContents1) => {
+
+    log(5, `reading ${fileName2} ...`);
+    readFilePromise(filePath2, 'utf-8').then((fileContents2) => {
+
+      log(6, 'comparing file contents ...');
+      const expected = fileContents1 === fileContents2;
+      log(7, 'asserting your guess ...');
+      assert.strictEqual(yourGuess, expected);
+
+      log(8, '\033[32mpass!\x1b[0m');
+      fs.appendFileSync(__filename, `\n// pass: ${(new Date()).toLocaleString()}`);
+
+    }).catch(err => console.error(err));
+  })
+  .catch(err => console.error(err));
+
+
+/*
+log(4, `reading ${fileName1} ...`);
 const fileContents1 = fs.readFileSync(filePath1, 'utf-8');
 
 log(5, `reading ${fileName2} ...`);
@@ -46,3 +68,5 @@ assert.strictEqual(yourGuess, expected);
 
 log(8, '\033[32mpass!\x1b[0m');
 fs.appendFileSync(__filename, `\n// pass: ${(new Date()).toLocaleString()}`);
+*/
+// pass: 5/11/2020, 4:58:10 PM
