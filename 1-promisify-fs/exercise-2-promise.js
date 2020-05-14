@@ -2,6 +2,7 @@
 const fs = require(`fs`);
 const path = require(`path`);
 const assert = require(`assert`);
+const util = require('util');
 
 // declare constants
 const EXERCISE_NAME = path.basename(__filename);
@@ -12,7 +13,9 @@ const log = (logId, value) => console.log(
   `\nlog ${logId} (${Date.now() - START} ms):\n`,
   value,
 );
-
+const readFilePromise = util.promisify(fs.readFile);
+const writeFilePromise = util.promisify(fs.writeFile);
+const copyFilePromise = util.promisify(fs.copyFile);
 
 // --- main script ---
 console.log(`\n--- ${EXERCISE_NAME} ---`);
@@ -25,7 +28,39 @@ const fileName2 = process.argv[3];
 const targetPath = path.join(__dirname, fileName2);
 log(2, targetPath);
 
+//promise
 log(3, `reading original contents from ${fileName1} ...`);
+readFilePromise(sourcePath, 'utf8')//read file 1 first original
+  .then((originalSourceContent) => {
+    log(4, `copying to ${fileName2} ...`);
+    copyFilePromise(sourcePath, targetPath)
+      .then(() => {
+
+        log(5, `reading ${fileName1} ...`);
+        readFilePromise(sourcePath, `utf-8`).then((sourceContent) => {
+          log(6, `asserting ${fileName1} ...`);
+          assert.strictEqual(sourceContent, originalSourceContent);
+
+          log(7, `reading ${fileName2} ...`);
+          readFilePromise(targetPath, `utf-8`).then((targetContent) => {
+
+            log(8, `asserting ${fileName2} ...`);
+            assert.strictEqual(targetContent, originalSourceContent);
+
+            log(9, '\033[32mpass!\x1b[0m');
+            fs.appendFileSync(__filename, `\n// pass: ${(new Date()).toLocaleString()}`);
+
+          }).catch(err => console.error(err))
+        }
+        ).catch(err => console.error(err));
+      })
+      .catch(err => console.error(err))
+  })
+  .catch(err => console.error(err));
+
+
+
+/*log(3, `reading original contents from ${fileName1} ...`);
 fs.readFile(sourcePath, `utf-8`, (err, originalSourceContent) => {
   if (err) {
     console.error(err);
@@ -68,5 +103,7 @@ fs.readFile(sourcePath, `utf-8`, (err, originalSourceContent) => {
 
 });
 
+*/
 
 
+// pass: 5/11/2020, 3:48:40 PM

@@ -2,6 +2,7 @@
 const fs = require(`fs`);
 const path = require(`path`);
 const assert = require(`assert`);
+const util = require('util');
 
 // declare constants
 const EXERCISE_NAME = path.basename(__filename);
@@ -12,7 +13,8 @@ const log = (logId, value) => console.log(
   `\nlog ${logId} (${Date.now() - START} ms):\n`,
   value,
 );
-
+const readFilePromise = util.promisify(fs.readFile);
+const writeFilePromise = util.promisify(fs.writeFile);
 
 // --- main script ---
 console.log(`\n--- ${EXERCISE_NAME} ---`);
@@ -24,8 +26,24 @@ log(1, filePath);
 const newFileContent = process.argv[3];
 log(2, newFileContent);
 
+writeFilePromise(filePath, newFileContent)
+  .then(() => {
 
-log(3, `writing ${fileName} ...`);
+    log(3, 'reading file ...');
+    readFilePromise(filePath, 'utf-8')
+      .then((fileContent) => {
+        log(4, 'asserting ...');
+        assert.strictEqual(fileContent, newFileContent);
+        log(5, '\033[32mpass!\x1b[0m');
+        // you don't need to refactor this line
+        fs.appendFileSync(__filename, `\n// pass: ${(new Date()).toLocaleString()}`);
+      })
+      .catch(err => console.error(err))
+  })
+  .catch(err => console.error(err));
+
+
+/*log(3, `writing ${fileName} ...`);
 fs.writeFile(filePath, newFileContent, (err) => {
   if (err) {
     console.error(err);
@@ -45,8 +63,10 @@ fs.writeFile(filePath, newFileContent, (err) => {
     fs.appendFileSync(__filename, `\n// pass: ${(new Date()).toLocaleString()}`);
   });
 
-});
+});*/
 
 
 
 
+
+// pass: 5/11/2020, 12:59:11 PM
